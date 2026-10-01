@@ -40,6 +40,7 @@ type AWSIoT struct {
 
 type Installation struct {
 	Name string
+	ID   string
 }
 
 type API struct {

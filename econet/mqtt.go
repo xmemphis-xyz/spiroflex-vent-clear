@@ -43,6 +43,7 @@ type OperationRequest struct {
 type TargetRequest struct {
 	Component  string      `json:"component"`
 	Parameters interface{} `json:"parameters,omitempty"`
+	IsRaw      int         `json:"isRaw,omitempty"`
 }
 
 type OperationResponse struct {
@@ -71,6 +72,49 @@ type ComponentOnBus struct {
 	ComponentID string
 }
 
+func (s *MQTTSession) GetAllValues(ctx context.Context, targetComponentID string) (json.RawMessage, error) {
+	resp, err := s.SendInstallationRequest(ctx, []OperationRequest{
+		{
+			Name: GET_SEQUENTIAL_VALUES,
+			Targets: []TargetRequest{
+				{
+					Component: targetComponentID,
+					Parameters: map[string]interface{}{
+						"sequences": [][]string{
+							{"0", "*"},
+						},
+					},
+				},
+			},
+		},
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("GET_SEQUENTIAL_VALUES failed: %w", err)
+	}
+
+	for _, op := range resp {
+		if op.Name != GET_SEQUENTIAL_VALUES {
+			continue
+		}
+
+		if op.StatusCode != 0 {
+			return nil, fmt.Errorf(
+				"GET_SEQUENTIAL_VALUES failed, status code: %d",
+				op.StatusCode,
+			)
+		}
+
+		for _, target := range op.Targets {
+			if target.Component == targetComponentID {
+				return target.Parameters, nil
+			}
+		}
+	}
+
+	return nil, fmt.Errorf("component not found in GET_SEQUENTIAL_VALUES response")
+}
+
 func (s *MQTTSession) GetComponentsOnBus(ctx context.Context) ([]ComponentOnBus, error) {
 	resp, err := s.SendInstallationRequest(ctx, []OperationRequest{
 		{
@@ -94,6 +138,88 @@ func (s *MQTTSession) GetComponentsOnBus(ctx context.Context) ([]ComponentOnBus,
 		}
 	}
 	return cobs, nil
+}
+
+func (s *MQTTSession) GetSequentialValues(ctx context.Context, targetComponentID string) (json.RawMessage, error) {
+	resp, err := s.SendInstallationRequest(ctx, []OperationRequest{
+		{
+			Name: GET_SEQUENTIAL_VALUES,
+			Targets: []TargetRequest{
+				{
+					Component: targetComponentID,
+					Parameters: map[string]interface{}{
+						"sequences": [][]string{
+							{"0", "*"},
+						},
+					},
+				},
+			},
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("GET_SEQUENTIAL_VALUES request failed: %w", err)
+	}
+
+	for _, op := range resp {
+		if op.Name != GET_SEQUENTIAL_VALUES {
+			continue
+		}
+
+		if op.StatusCode != 0 {
+			return nil, fmt.Errorf(
+				"GET_SEQUENTIAL_VALUES failed, status code: %d",
+				op.StatusCode,
+			)
+		}
+
+		for _, target := range op.Targets {
+			if target.Component != targetComponentID {
+				continue
+			}
+
+			if target.StatusCode != 0 {
+				return nil, fmt.Errorf(
+					"GET_SEQUENTIAL_VALUES target failed, status code: %d",
+					target.StatusCode,
+				)
+			}
+
+			return target.Parameters, nil
+		}
+	}
+
+	return nil, fmt.Errorf("component %s not found in response", targetComponentID)
+}
+
+func (s *MQTTSession) GetValues(ctx context.Context, targetComponentID string, parameters []string) ([]TargetResponse, error) {
+	resp, err := s.SendInstallationRequest(ctx, []OperationRequest{
+		{
+			Name: GET_VALUES,
+			Targets: []TargetRequest{
+				{
+					Component:  targetComponentID,
+					Parameters: parameters,
+				},
+			},
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("SendInstallationRequest failed: %w", err)
+	}
+
+	for _, op := range resp {
+		if op.StatusCode != 0 {
+			return nil, fmt.Errorf("GET_VALUES failed, status code: %d", op.StatusCode)
+		}
+	}
+
+	var result []TargetResponse
+
+	for _, op := range resp {
+		result = append(result, op.Targets...)
+	}
+
+	return result, nil
 }
 
 func (s *MQTTSession) VentLevel(ctx context.Context, targetComponentID, level string) error {
@@ -194,7 +320,7 @@ func verifyParamsModificationStatus(targetComponentID string, resp []OperationRe
 			}
 
 			if t.StatusCode != 0 {
-				return fmt.Errorf("params modification failed, status code: %w", t.StatusCode)
+				return fmt.Errorf("params modification failed, status code: %d", t.StatusCode)
 			}
 			return nil
 		}
@@ -351,7 +477,7 @@ func (s *MQTTSession) onTransactionalMessage(client mqtt.Client, msg mqtt.Messag
 
 	err := json.Unmarshal(msg.Payload(), &envelope)
 	if err != nil {
-		log.Printf("Message will be ignored due to error: %w", err)
+		log.Printf("Message will be ignored due to error: %v", err)
 		return
 	}
 	if envelope.TransactionID == "" {
