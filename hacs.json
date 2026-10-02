@@ -1,7 +1,6 @@
 {
   "name": "Spiroflex ecoVENT Simple",
   "content_in_root": false,
-  "filename": "custom_components/spiroflex_vent_clear",
   "render_readme": true,
   "homeassistant": "2026.10.0"
 }
