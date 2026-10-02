@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.1
+
+- Removed the unnecessary Home Assistant version restriction from HACS metadata.
+
 ## 0.1.0
 
 Initial Home Assistant release.
