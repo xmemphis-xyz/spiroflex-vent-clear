@@ -4,8 +4,6 @@ from typing import Any
 
 from aiohttp import ClientError, ClientSession
 
-from .const import CONF_HOST, CONF_PORT
-
 
 class SpiroflexApiError(Exception):
     """Raised when the Spiroflex API cannot be used."""
