@@ -20,15 +20,11 @@ type VentStatus struct {
 	ExhaustTemperature  float64 `json:"exhaust_temperature"`
 	RoomTemperature     float64 `json:"room_temperature"`
 	Humidity            float64 `json:"humidity"`
-	CO2                 float64 `json:"co2"`
-	SupplyAirflow       float64 `json:"supply_airflow"`
-	ExtractAirflow      float64 `json:"extract_airflow"`
 	SupplyFanPercent    float64 `json:"supply_fan_percent"`
 	ExtractFanPercent   float64 `json:"extract_fan_percent"`
 	FilterDaysRemaining float64 `json:"filter_days_remaining"`
 	SupplyFilterUsage   float64 `json:"supply_filter_usage"`
 	ExtractFilterUsage  float64 `json:"extract_filter_usage"`
-	ProtectBoxDays      float64 `json:"protect_box_days"`
 	Alarm               bool    `json:"alarm"`
 }
 
@@ -52,7 +48,6 @@ func (ws *WebServer) apiVentStatus(w http.ResponseWriter, r *http.Request) {
 		"u6208",
 		"u6338",
 		"u6273",
-		"u6265",
 		"u7151",
 		"u6202",
 		"u6203",
@@ -170,11 +165,6 @@ func buildVentStatus(parameters map[string][]float64) (VentStatus, error) {
 	}
 
 	status.Humidity, err = requiredParameter(parameters, "u6273")
-	if err != nil {
-		return VentStatus{}, err
-	}
-
-	status.CO2, err = requiredParameter(parameters, "u6265")
 	if err != nil {
 		return VentStatus{}, err
 	}
