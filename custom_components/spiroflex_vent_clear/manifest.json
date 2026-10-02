@@ -1,10 +1,12 @@
 {
   "domain": "spiroflex_vent_clear",
   "name": "Spiroflex ecoVENT Simple",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "documentation": "https://github.com/xmemphis-xyz/spiroflex-vent-clear",
   "issue_tracker": "https://github.com/xmemphis-xyz/spiroflex-vent-clear/issues",
-  "codeowners": ["@xmemphis-xyz"],
+  "codeowners": [
+    "@xmemphis-xyz"
+  ],
   "config_flow": true,
   "integration_type": "device",
   "iot_class": "local_polling",
