@@ -67,13 +67,6 @@ SENSORS = (
         device_class=SensorDeviceClass.HUMIDITY,
     ),
     SensorEntityDescription(
-        key="co2",
-        name="CO₂",
-        icon="mdi:molecule-co2",
-        native_unit_of_measurement="ppm",
-        device_class=SensorDeviceClass.CO2,
-    ),
-    SensorEntityDescription(
         key="supply_airflow",
         name="Przepływ nawiewu",
         icon="mdi:weather-windy",
@@ -149,4 +142,16 @@ class SpiroflexSensor(SpiroflexEntity, SensorEntity):
 
     @property
     def native_value(self) -> Any:
-        return self.coordinator.data.get(self.entity_description.key)
+        value = self.coordinator.data.get(self.entity_description.key)
+
+        if value is None:
+            return None
+
+        if self.entity_description.key in {
+            "humidity",
+            "supply_filter_usage",
+            "extract_filter_usage",
+        }:
+            return round(float(value), 1)
+
+        return value
