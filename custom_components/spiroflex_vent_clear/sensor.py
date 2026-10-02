@@ -24,7 +24,7 @@ class SensorDescription:
 
 
 SENSORS = (
-    SensorDescription("status", "Stan pracy", "mdi:state-machine"),
+    SensorDescription("status", "Stan pracy", "mdi:state-machine", state_class=None),
     SensorDescription("supply_temperature", "Temperatura nawiewu", "mdi:thermometer", UnitOfTemperature.CELSIUS, SensorDeviceClass.TEMPERATURE),
     SensorDescription("extract_temperature", "Temperatura wyciągu", "mdi:thermometer", UnitOfTemperature.CELSIUS, SensorDeviceClass.TEMPERATURE),
     SensorDescription("intake_temperature", "Temperatura czerpni", "mdi:thermometer", UnitOfTemperature.CELSIUS, SensorDeviceClass.TEMPERATURE),
