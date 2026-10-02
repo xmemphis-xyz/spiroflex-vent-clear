@@ -1,0 +1,24 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect Spiroflex ecoVENT Simple",
+        "description": "Enter the address of the local ventclear API.",
+        "data": {
+          "host": "Host",
+          "port": "Port"
+        },
+        "data_description": {
+          "host": "IP address or hostname of the server running ventclear.",
+          "port": "HTTP port exposed by ventclear. The default is 8088."
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Unable to connect to the Spiroflex API."
+    },
+    "abort": {
+      "already_configured": "This Spiroflex API is already configured."
+    }
+  }
+}
