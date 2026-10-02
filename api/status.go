@@ -9,18 +9,27 @@ import (
 )
 
 type VentStatus struct {
-	Power              bool    `json:"power"`
-	Level              *int    `json:"level"`
-	Paused             bool    `json:"paused"`
-	Mode               string  `json:"mode"`
-	Status             string  `json:"status"`
-	SupplyTemperature  float64 `json:"supply_temperature"`
-	ExtractTemperature float64 `json:"extract_temperature"`
-	IntakeTemperature  float64 `json:"intake_temperature"`
-	ExhaustTemperature float64 `json:"exhaust_temperature"`
-	RoomTemperature    float64 `json:"room_temperature"`
-	Humidity           float64 `json:"humidity"`
-	CO2                float64 `json:"co2"`
+	Power               bool    `json:"power"`
+	Level               *int    `json:"level"`
+	Paused              bool    `json:"paused"`
+	Mode                string  `json:"mode"`
+	Status              string  `json:"status"`
+	SupplyTemperature   float64 `json:"supply_temperature"`
+	ExtractTemperature  float64 `json:"extract_temperature"`
+	IntakeTemperature   float64 `json:"intake_temperature"`
+	ExhaustTemperature  float64 `json:"exhaust_temperature"`
+	RoomTemperature     float64 `json:"room_temperature"`
+	Humidity            float64 `json:"humidity"`
+	CO2                 float64 `json:"co2"`
+	SupplyAirflow       float64 `json:"supply_airflow"`
+	ExtractAirflow      float64 `json:"extract_airflow"`
+	SupplyFanPercent    float64 `json:"supply_fan_percent"`
+	ExtractFanPercent   float64 `json:"extract_fan_percent"`
+	FilterDaysRemaining float64 `json:"filter_days_remaining"`
+	SupplyFilterUsage   float64 `json:"supply_filter_usage"`
+	ExtractFilterUsage  float64 `json:"extract_filter_usage"`
+	ProtectBoxDays      float64 `json:"protect_box_days"`
+	Alarm               bool    `json:"alarm"`
 }
 
 func (ws *WebServer) apiVentStatus(w http.ResponseWriter, r *http.Request) {
@@ -45,6 +54,15 @@ func (ws *WebServer) apiVentStatus(w http.ResponseWriter, r *http.Request) {
 		"u6273",
 		"u6265",
 		"u7151",
+		"u6828",
+		"u6829",
+		"u6202",
+		"u6203",
+		"u7076",
+		"u6938",
+		"u6939",
+		"u2850",
+		"u6999",
 	})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadGateway)
@@ -164,6 +182,52 @@ func buildVentStatus(parameters map[string][]float64) (VentStatus, error) {
 		return VentStatus{}, err
 	}
 
+	status.SupplyAirflow, err = requiredParameter(parameters, "u6828")
+	if err != nil {
+		return VentStatus{}, err
+	}
+
+	status.ExtractAirflow, err = requiredParameter(parameters, "u6829")
+	if err != nil {
+		return VentStatus{}, err
+	}
+
+	status.SupplyFanPercent, err = requiredParameter(parameters, "u6202")
+	if err != nil {
+		return VentStatus{}, err
+	}
+
+	status.ExtractFanPercent, err = requiredParameter(parameters, "u6203")
+	if err != nil {
+		return VentStatus{}, err
+	}
+
+	status.FilterDaysRemaining, err = requiredParameter(parameters, "u7076")
+	if err != nil {
+		return VentStatus{}, err
+	}
+
+	status.SupplyFilterUsage, err = requiredParameter(parameters, "u6938")
+	if err != nil {
+		return VentStatus{}, err
+	}
+
+	status.ExtractFilterUsage, err = requiredParameter(parameters, "u6939")
+	if err != nil {
+		return VentStatus{}, err
+	}
+
+	status.ProtectBoxDays, err = requiredParameter(parameters, "u2850")
+	if err != nil {
+		return VentStatus{}, err
+	}
+
+	alarm, err := requiredParameter(parameters, "u6999")
+	if err != nil {
+		return VentStatus{}, err
+	}
+	status.Alarm = alarm != 0
+
 	return status, nil
 }
 
@@ -220,6 +284,8 @@ func statusName(value int) string {
 		return "heat_recovery"
 	case 15:
 		return "cool_recovery"
+	case 16:
+		return "service_stop"
 	default:
 		return "unknown"
 	}
