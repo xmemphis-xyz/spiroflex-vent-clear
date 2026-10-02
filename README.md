@@ -74,7 +74,7 @@ Using HACS:
 7. Search for **Spiroflex ecoVENT Simple**.
 8. Enter the host and port of the server running `ventclear` (default port: `8088`).
 
-The integration creates one Home Assistant device and exposes power control, ventilation level, operating mode, temperatures, humidity, CO₂, airflow, fan percentages, filter status and alarm state.
+The integration creates one Home Assistant device and exposes power control, ventilation level, operating mode, temperatures, humidity, fan percentages, filter status and alarm state.
 
 The Home Assistant integration communicates only with the local REST API exposed by `ventclear`; AWS IoT/Cognito credentials remain on the Go service and are not stored in Home Assistant.
 \n

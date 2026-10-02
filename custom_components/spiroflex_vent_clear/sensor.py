@@ -8,7 +8,7 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.const import PERCENTAGE, UnitOfTemperature, UnitOfVolumeFlowRate
+from homeassistant.const import PERCENTAGE, UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
@@ -67,18 +67,6 @@ SENSORS = (
         device_class=SensorDeviceClass.HUMIDITY,
     ),
     SensorEntityDescription(
-        key="supply_airflow",
-        name="Przepływ nawiewu",
-        icon="mdi:weather-windy",
-        native_unit_of_measurement=UnitOfVolumeFlowRate.CUBIC_METERS_PER_HOUR,
-    ),
-    SensorEntityDescription(
-        key="extract_airflow",
-        name="Przepływ wywiewu",
-        icon="mdi:weather-windy",
-        native_unit_of_measurement=UnitOfVolumeFlowRate.CUBIC_METERS_PER_HOUR,
-    ),
-    SensorEntityDescription(
         key="supply_fan_percent",
         name="Nawiew",
         icon="mdi:fan",
@@ -107,12 +95,6 @@ SENSORS = (
         name="Zużycie filtra wywiewu",
         icon="mdi:air-filter",
         native_unit_of_measurement=PERCENTAGE,
-    ),
-    SensorEntityDescription(
-        key="protect_box_days",
-        name="Protect Box - pozostało dni",
-        icon="mdi:air-filter",
-        native_unit_of_measurement="d",
     ),
 )
 

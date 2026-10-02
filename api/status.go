@@ -54,14 +54,11 @@ func (ws *WebServer) apiVentStatus(w http.ResponseWriter, r *http.Request) {
 		"u6273",
 		"u6265",
 		"u7151",
-		"u6828",
-		"u6829",
 		"u6202",
 		"u6203",
 		"u7076",
 		"u6938",
 		"u6939",
-		"u2850",
 		"u6999",
 	})
 	if err != nil {
@@ -182,16 +179,6 @@ func buildVentStatus(parameters map[string][]float64) (VentStatus, error) {
 		return VentStatus{}, err
 	}
 
-	status.SupplyAirflow, err = requiredParameter(parameters, "u6828")
-	if err != nil {
-		return VentStatus{}, err
-	}
-
-	status.ExtractAirflow, err = requiredParameter(parameters, "u6829")
-	if err != nil {
-		return VentStatus{}, err
-	}
-
 	status.SupplyFanPercent, err = requiredParameter(parameters, "u6202")
 	if err != nil {
 		return VentStatus{}, err
@@ -213,11 +200,6 @@ func buildVentStatus(parameters map[string][]float64) (VentStatus, error) {
 	}
 
 	status.ExtractFilterUsage, err = requiredParameter(parameters, "u6939")
-	if err != nil {
-		return VentStatus{}, err
-	}
-
-	status.ProtectBoxDays, err = requiredParameter(parameters, "u2850")
 	if err != nil {
 		return VentStatus{}, err
 	}
