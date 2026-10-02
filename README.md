@@ -1,80 +1,161 @@
-# spiroflex-vent-clear
+# Spiroflex ecoVENT Simple
 
-## ⚠️  Disclaimer
+Home Assistant integration and local REST bridge for **Spiroflex Vent Clear / ecoVENT Simple** ventilation units.
 
-This repository is intended **solely for educational purposes**.
+The project consists of:
 
-- Do **not** use this code in production environments or for any real-world applications.
-- The code may be incomplete, insecure, or not follow best practices.
-- I **do not take any responsibility** for any issues, damages, or consequences resulting from the use, misuse, or inability to use the code provided in this repository.
+- a Go service that communicates with the Spiroflex ecoNET/AWS IoT backend;
+- a local REST API for controlling and reading the ventilation unit;
+- a custom Home Assistant integration that communicates only with that local REST API.
 
-By using any part of this code, you agree that you are doing so **at your own risk**.
+> **Status:** early release. The integration is being developed against a real ecoVENT Simple installation. Some device functions, including BOOST 1/2 configuration, are still being mapped and are not yet exposed.
 
-## 📦 Project Overview
+## Features
 
-**spiroflex-vent-clear** is an experimental integration with the **Spiroflex Vent Clear** ventilation control system. It is implemented as a Go-based application exposing a RESTful API and support for **Amazon Alexa voice commands**.
+The current Home Assistant integration provides:
 
-The application communicates with AWS IoT and Cognito services to authenticate users and interact with VC device. It provides an HTTP API for local control, and optionally, an Alexa Skill endpoint for voice-based interaction.
+- ventilation power control;
+- ventilation level 1–3;
+- pause;
+- operating mode: **Harmonogram** / **Manual**;
+- operating status;
+- supply, extract, intake, exhaust and room temperatures;
+- humidity;
+- supply and extract fan percentages;
+- filter replacement countdown;
+- supply and extract filter usage;
+- alarm state.
 
-## 🚀 How to Run
+Unsupported or unverified parameters are intentionally not exposed.
 
-Ensure Go is installed, create `config.yaml` file, then launch the app using:
+## Architecture
 
-```bash
-go run ./cmd/ventclear
+```
+Home Assistant
+      |
+      | local HTTP
+      v
+ventclear REST API
+      |
+      | MQTT / AWS IoT
+      v
+Spiroflex ecoNET
 ```
 
-## ⚙️ Sample Configuration
+AWS Cognito and IoT credentials stay in the Go service configuration. They are not stored in Home Assistant.
 
-Below is a sample `config.yaml` file. All identifiers and values have been changed for privacy and illustrative purposes:
+## Home Assistant installation with HACS
+
+After the repository is public:
+
+1. Open **HACS → Integrations**.
+2. Search for **Spiroflex ecoVENT Simple**.
+3. Install the integration.
+4. Restart Home Assistant.
+5. Go to **Settings → Devices & services → Add integration**.
+6. Search for **Spiroflex ecoVENT Simple**.
+7. Enter the host and port of the machine running `ventclear`.
+
+The default REST API port is **8088**.
+
+### Manual HACS repository
+
+If the repository has not yet been added to the HACS default repository list, add it as a custom repository:
+
+```
+https://github.com/xmemphis-xyz/spiroflex-vent-clear
+```
+
+Select **Integration** as the category.
+
+## Running the Go service
+
+Create a local `config.yaml` containing the required ecoNET credentials and installation information.
+
+Example structure:
 
 ```yaml
 region: eu-west-3
 
 cognito:
   username: "user@example.com"
-  password: "fake-password"
-  user_pool_id: "eu-west-3_examplePool"
-  client_id: "abc123exampleclientid"
-  identity_pool_id: "eu-west-3:12345678-abcd-ef01-2345-6789abcdef01"
+  password: "your-password"
+  user_pool_id: "eu-west-3_example"
+  client_id: "your-client-id"
+  identity_pool_id: "eu-west-3:xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 
 gateway:
-  name: demoapigateway
+  name: your-api-gateway
 
 iot:
-  name: demoiotendpoint-ats
+  name: your-iot-endpoint
 
 installation:
-  name: "SCP V"
+  name: "ecoVENT Simple"
+  id: "your-installation-id"
 
 api:
-  endpoint: 0.0.0.0:7777
+  endpoint: "0.0.0.0:8088"
   rest: true
-  alexa: true
-
-alexa:
-  app_id: amzn1.ask.skill.00000000-0000-0000-0000-000000000000
 ```
 
-## Home Assistant integration
+**Do not commit `config.yaml`.** It is included in `.gitignore`.
 
-The repository now contains a custom Home Assistant integration for **Spiroflex ecoVENT Simple**.
+Run:
 
-### Installation
+```bash
+go run ./cmd/ventclear
+```
 
-Using HACS:
+Or build a binary:
 
-1. Open **HACS → Integrations**.
-2. Add this repository as a custom repository:
-   `https://github.com/xmemphis-xyz/spiroflex-vent-clear`
-3. Select category **Integration**.
-4. Install **Spiroflex ecoVENT Simple**.
-5. Restart Home Assistant.
-6. Go to **Settings → Devices & services → Add integration**.
-7. Search for **Spiroflex ecoVENT Simple**.
-8. Enter the host and port of the server running `ventclear` (default port: `8088`).
+```bash
+go build -o ventclear ./cmd/ventclear
+```
 
-The integration creates one Home Assistant device and exposes power control, ventilation level, operating mode, temperatures, humidity, fan percentages, filter status and alarm state.
+## Local API
 
-The Home Assistant integration communicates only with the local REST API exposed by `ventclear`; AWS IoT/Cognito credentials remain on the Go service and are not stored in Home Assistant.
-\n
+The REST bridge currently exposes:
+
+```
+GET  /api/vent/status
+
+POST /api/vent/power/on
+POST /api/vent/power/off
+
+POST /api/vent/level/1
+POST /api/vent/level/2
+POST /api/vent/level/3
+POST /api/vent/pause
+
+POST /api/vent/mode/schedule
+POST /api/vent/mode/manual
+```
+
+Diagnostic endpoints are also available for protocol development.
+
+## Development
+
+The Home Assistant integration lives under:
+
+```
+custom_components/spiroflex_vent_clear/
+```
+
+The Go REST API lives under:
+
+```
+api/
+```
+
+The ecoNET communication layer lives under:
+
+```
+econet/
+```
+
+Pull requests and issue reports are welcome.
+
+## Disclaimer
+
+This project is an independent community project and is not affiliated with or endorsed by Spiroflex. Use it at your own risk. Test changes carefully before using them to control a ventilation system.
