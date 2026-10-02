@@ -1,5 +1,5 @@
 name: "Spiroflex ecoVENT Simple"
-version: "0.1.0"
+version: "0.1.2"
 slug: "spiroflex_vent_clear"
 description: "Go REST bridge for Spiroflex Vent Clear / ecoVENT Simple"
 url: "https://github.com/xmemphis-xyz/spiroflex-vent-clear"
@@ -51,3 +51,5 @@ schema:
   api:
     endpoint: str
     rest: bool
+
+image: "ghcr.io/xmemphis-xyz/spiroflex-vent-clear"
