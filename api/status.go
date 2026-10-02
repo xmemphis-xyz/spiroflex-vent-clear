@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -225,5 +224,3 @@ func statusName(value int) string {
 		return "unknown"
 	}
 }
-
-var _ context.Context
