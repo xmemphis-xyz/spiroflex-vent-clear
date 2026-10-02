@@ -44,6 +44,22 @@ Spiroflex ecoNET
 
 AWS Cognito and IoT credentials stay in the Go service configuration. They are not stored in Home Assistant.
 
+## Home Assistant app (Docker)
+
+The Go REST bridge can also run as a Home Assistant app (formerly add-on) on Home Assistant OS.
+
+The app is located under:
+
+```
+app/spiroflex_vent_clear/
+```
+
+It runs the same Go service in a dedicated container and exposes the REST API on port **8088**. Configuration is entered through the Home Assistant app UI; credentials are stored in the app's `options.json` and are not committed to Git.
+
+The container image is published to GitHub Container Registry by GitHub Actions for **aarch64** and **amd64**.
+
+See the app documentation in `app/spiroflex_vent_clear/README.md`.
+
 ## Home Assistant installation with HACS
 
 After the repository is public:
