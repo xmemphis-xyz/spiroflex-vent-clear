@@ -6,7 +6,6 @@ from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
     SensorEntityDescription,
-    SensorStateClass,
 )
 from homeassistant.const import PERCENTAGE, UnitOfTemperature
 from homeassistant.core import HomeAssistant
@@ -22,7 +21,6 @@ SENSORS = (
         key="status",
         name="Stan pracy",
         icon="mdi:state-machine",
-        state_class=None,
     ),
     SensorEntityDescription(
         key="supply_temperature",
