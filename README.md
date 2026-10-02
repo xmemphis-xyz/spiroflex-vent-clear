@@ -55,3 +55,26 @@ api:
 alexa:
   app_id: amzn1.ask.skill.00000000-0000-0000-0000-000000000000
 ```
+
+## Home Assistant integration
+
+The repository now contains a custom Home Assistant integration for **Spiroflex ecoVENT Simple**.
+
+### Installation
+
+Using HACS:
+
+1. Open **HACS → Integrations**.
+2. Add this repository as a custom repository:
+   `https://github.com/xmemphis-xyz/spiroflex-vent-clear`
+3. Select category **Integration**.
+4. Install **Spiroflex ecoVENT Simple**.
+5. Restart Home Assistant.
+6. Go to **Settings → Devices & services → Add integration**.
+7. Search for **Spiroflex ecoVENT Simple**.
+8. Enter the host and port of the server running `ventclear` (default port: `8088`).
+
+The integration creates one Home Assistant device and exposes power control, ventilation level, operating mode, temperatures, humidity, CO₂, airflow, fan percentages, filter status and alarm state.
+
+The Home Assistant integration communicates only with the local REST API exposed by `ventclear`; AWS IoT/Cognito credentials remain on the Go service and are not stored in Home Assistant.
+\n
