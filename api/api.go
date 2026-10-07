@@ -297,3 +297,23 @@ func (ws *WebServer) apiVentSequentialValues(w http.ResponseWriter, r *http.Requ
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(values)
 }
+
+func (ws *WebServer) apiVentParameterTable(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	session, componentID, err := ws.prepareEconet(ctx)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadGateway)
+		return
+	}
+	defer session.Disconnect()
+
+	values, err := session.GetParameterTable(ctx, componentID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadGateway)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(values)
+}
