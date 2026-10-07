@@ -140,6 +140,42 @@ func (s *MQTTSession) GetComponentsOnBus(ctx context.Context) ([]ComponentOnBus,
 	return cobs, nil
 }
 
+func (s *MQTTSession) GetParameterTable(ctx context.Context, targetComponentID string) (json.RawMessage, error) {
+	resp, err := s.SendInstallationRequest(ctx, []OperationRequest{
+		{
+			Name: PARAM_TABLE_DUMP,
+			Targets: []TargetRequest{
+				{
+					Component: targetComponentID,
+				},
+			},
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("PARAM_TABLE_DUMP request failed: %w", err)
+	}
+
+	for _, op := range resp {
+		if op.Name != PARAM_TABLE_DUMP {
+			continue
+		}
+		if op.StatusCode != 0 {
+			return nil, fmt.Errorf("PARAM_TABLE_DUMP failed, status code: %d", op.StatusCode)
+		}
+		for _, target := range op.Targets {
+			if target.Component != targetComponentID {
+				continue
+			}
+			if target.StatusCode != 0 {
+				return nil, fmt.Errorf("PARAM_TABLE_DUMP target failed, status code: %d", target.StatusCode)
+			}
+			return target.Parameters, nil
+		}
+	}
+
+	return nil, fmt.Errorf("component %s not found in PARAM_TABLE_DUMP response", targetComponentID)
+}
+
 func (s *MQTTSession) GetSequentialValues(ctx context.Context, targetComponentID string) (json.RawMessage, error) {
 	resp, err := s.SendInstallationRequest(ctx, []OperationRequest{
 		{
