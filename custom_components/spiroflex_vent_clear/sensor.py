@@ -17,6 +17,8 @@ from .entity import SpiroflexEntity
 
 
 SENSORS = (
+    SensorEntityDescription(key="boost_1_remaining", name="BOOST 1 - pozostały czas", icon="mdi:timer-outline", native_unit_of_measurement="min"),
+    SensorEntityDescription(key="boost_2_remaining", name="BOOST 2 - pozostały czas", icon="mdi:timer-outline", native_unit_of_measurement="min"),
     SensorEntityDescription(
         key="status",
         name="Stan pracy",
