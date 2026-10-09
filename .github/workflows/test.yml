@@ -1,0 +1,26 @@
+name: Test backend and BOOST controls
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Go tests and race detector
+        run: go test -race ./...
+      - name: Go vet
+        run: go vet ./...
+      - name: Build backend
+        run: go build -o /tmp/ventclear ./cmd/ventclear
+      - name: Python syntax and BOOST contract tests
+        run: |
+          python3 -m compileall -q custom_components
+          python3 -m unittest discover -s tests -p 'test_boost_*.py' -v

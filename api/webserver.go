@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"sync"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -11,25 +12,22 @@ import (
 
 type WebServer struct {
 	c *spiroflex.Config
+	boostMu sync.Mutex
 }
 
 type response struct {
-	Ok    bool   `json:"ok"`
+	Ok bool `json:"ok"`
 	Error string `json:"error,omitempty"`
 }
 
 func NewWebServer(c *spiroflex.Config) *WebServer {
-	return &WebServer{
-		c: c,
-	}
+	return &WebServer{c: c}
 }
 
 func (ws *WebServer) Handler() http.Handler {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
-
 	r.Get("/", ws.index)
-
 	if ws.c.API.Rest {
 		r.Route("/api", func(r chi.Router) {
 			r.Get("/diagnostics/components", ws.apiVentDiagnostics)
@@ -43,12 +41,13 @@ func (ws *WebServer) Handler() http.Handler {
 				r.Post("/level/{level:[1-3]?}", ws.apiVentLevel)
 				r.Post("/pause", ws.apiVentPause)
 				r.Post("/boost/{boost:1|2}", ws.apiVentBoost)
+				r.Post("/boost/{boost:1|2}/on", ws.apiVentBoost)
+				r.Post("/boost/{boost:1|2}/off", ws.apiVentBoostOff)
 				r.Post("/mode/{mode:schedule|manual}", ws.apiVentMode)
 				r.Post("/power/{state:on|off}", ws.apiVentPower)
 			})
 		})
 	}
-
 	if ws.c.API.Alexa {
 		skill := alexa.New(ws.c.Alexa.AppID)
 		r.HandleFunc("/alexa", func(w http.ResponseWriter, r *http.Request) {

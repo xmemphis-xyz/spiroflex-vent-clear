@@ -1,92 +1,96 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/mtojek/spiroflex-vent-clear/econet"
 )
 
-func (ws *WebServer) apiVentBoost(w http.ResponseWriter, r *http.Request) {
-	boost := chi.URLParam(r, "boost")
-	flag := 64
-	timer := "u7427"
-	if boost == "2" {
-		flag = 128
-		timer = "u7428"
-	} else if boost != "1" {
-		http.Error(w, "BOOST must be 1 or 2", http.StatusBadRequest)
-		return
-	}
+type mqttBoostDevice struct {
+	session *econet.MQTTSession
+	componentID string
+}
 
-	session, componentID, err := ws.prepareEconet(r.Context())
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadGateway)
-		return
+func (d mqttBoostDevice) ReadBoost(ctx context.Context) (boostSnapshot, error) {
+	values, err := d.session.GetValues(ctx, d.componentID, []string{"u7074", "u6639", "u7427", "u7428"})
+	if err != nil { return boostSnapshot{}, err }
+	for _, target := range values {
+		if target.Component != d.componentID { continue }
+		if target.StatusCode != 0 { return boostSnapshot{}, fmt.Errorf("BOOST read failed: status %d", target.StatusCode) }
+		return decodeBoostSnapshot(target.Parameters)
 	}
-	defer session.Disconnect()
+	return boostSnapshot{}, errors.New("BOOST component missing from response")
+}
 
-	read := func() (map[string]float64, error) {
-		raw, err := session.GetParameterTable(r.Context(), componentID)
-		if err != nil { return nil, err }
-		var rows [][]json.RawMessage
-		if err := json.Unmarshal(raw, &rows); err != nil { return nil, err }
-		values := make(map[string]float64)
-		for _, row := range rows {
-			if len(row) < 3 { continue }
-			var key string
-			if json.Unmarshal(row[0], &key) != nil { continue }
-			switch key {
-			case "u6639", "u7074", "u7427", "u7428":
-				var v float64
-				if json.Unmarshal(row[2], &v) == nil { values[key] = v }
-			}
-		}
-		for _, key := range []string{"u6639", "u7074", "u7427", "u7428"} {
-			if _, ok := values[key]; !ok { return nil, fmt.Errorf("missing %s", key) }
-		}
-		return values, nil
-	}
-
-	before, err := read()
-	if err != nil { http.Error(w, err.Error(), http.StatusBadGateway); return }
-	if before["u7074"] != 1 || before["u6639"] != 0 || before["u7427"] != -1 || before["u7428"] != -1 {
-		http.Error(w, "ventilation must be on with no active BOOST", http.StatusConflict)
-		return
-	}
-
-	log.Printf("Starting BOOST %s via u6639=%d", boost, flag)
-	resp, err := session.SendInstallationRequest(r.Context(), []econet.OperationRequest{{
+func (d mqttBoostDevice) WriteBoostMask(ctx context.Context, mask uint32) error {
+	log.Printf("BOOST command: u6639=%d", mask)
+	resp, err := d.session.SendInstallationRequest(ctx, []econet.OperationRequest{{
 		Name: econet.PARAMS_MODIFICATION,
-		Targets: []econet.TargetRequest{{
-			Component: componentID,
-			Parameters: map[string]string{"u6639": fmt.Sprintf("%d", flag)},
-		}},
+		Targets: []econet.TargetRequest{{Component: d.componentID, Parameters: map[string]string{"u6639": strconv.FormatUint(uint64(mask), 10)}}},
 	}})
-	if err != nil { http.Error(w, err.Error(), http.StatusBadGateway); return }
-
+	if err != nil { return err }
 	accepted := false
 	for _, op := range resp {
-		if op.Name != econet.PARAMS_MODIFICATION || op.StatusCode != 0 { continue }
-		for _, t := range op.Targets {
-			if t.Component == componentID && t.StatusCode == 0 { accepted = true }
+		if op.Name != econet.PARAMS_MODIFICATION { continue }
+		if op.StatusCode != 0 { return fmt.Errorf("BOOST command rejected: status %d", op.StatusCode) }
+		for _, target := range op.Targets {
+			if target.Component != d.componentID { continue }
+			if target.StatusCode != 0 { return fmt.Errorf("BOOST target rejected: status %d", target.StatusCode) }
+			accepted = true
 		}
 	}
-	if !accepted { http.Error(w, "BOOST write not acknowledged", http.StatusBadGateway); return }
+	if !accepted { return errors.New("BOOST command not acknowledged") }
+	return nil
+}
 
-	time.Sleep(2 * time.Second)
-	after, err := read()
-	if err != nil { http.Error(w, fmt.Sprintf("BOOST write acknowledged but readback failed: %v", err), http.StatusBadGateway); return }
-	if int(after["u6639"])&flag == 0 || after[timer] < 0 {
-		http.Error(w, "BOOST write acknowledged but activation not confirmed", http.StatusBadGateway)
+func (ws *WebServer) apiVentBoost(w http.ResponseWriter, r *http.Request) {
+	ws.serveBoostChange(w, r, true)
+}
+
+func (ws *WebServer) apiVentBoostOff(w http.ResponseWriter, r *http.Request) {
+	ws.serveBoostChange(w, r, false)
+}
+
+func writeBoostError(w http.ResponseWriter, err error, status int) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Cache-Control", "no-store")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(response{Error: err.Error()})
+}
+
+func (ws *WebServer) serveBoostChange(w http.ResponseWriter, r *http.Request, on bool) {
+	boost, err := strconv.Atoi(chi.URLParam(r, "boost"))
+	if err != nil || (boost != 1 && boost != 2) { writeBoostError(w, errBoostInvalid, http.StatusBadRequest); return }
+	// Covers start/stop and the legacy diagnostic write within this server.
+	if !ws.boostMu.TryLock() {
+		writeBoostError(w, errors.New("another BOOST command is in progress"), http.StatusConflict)
 		return
 	}
+	defer ws.boostMu.Unlock()
+	ctx, cancel := context.WithTimeout(r.Context(), 35*time.Second)
+	defer cancel()
+	session, componentID, err := ws.prepareEconet(ctx)
+	if err != nil { writeBoostError(w, err, http.StatusBadGateway); return }
+	defer session.Disconnect()
+	result, err := changeBoost(ctx, mqttBoostDevice{session, componentID}, boost, on, time.Second, 5)
+	if err != nil {
+		status := http.StatusBadGateway
+		if errors.Is(err, errBoostConflict) { status = http.StatusConflict }
+		if errors.Is(err, context.DeadlineExceeded) { status = http.StatusGatewayTimeout }
+		log.Printf("BOOST %d on=%t failed: %v", boost, on, err)
+		writeBoostError(w, err, status)
+		return
+	}
+	log.Printf("BOOST %d on=%t verified (changed=%t)", boost, on, result.Changed)
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(map[string]any{
-		"ok": true, "boost": boost, "remaining_minutes": int(after[timer]),
-	})
+	w.Header().Set("Cache-Control", "no-store")
+	_ = json.NewEncoder(w).Encode(result)
 }
