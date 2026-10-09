@@ -36,6 +36,7 @@ func (ws *WebServer) Handler() http.Handler {
 			r.Get("/diagnostics/sequential-values", ws.apiVentSequentialValues)
 			r.Get("/diagnostics/parameter-table", ws.apiVentParameterTable)
 			r.Get("/diagnostics/boost", ws.apiVentBoostDiagnostics)
+			r.Post("/diagnostics/boost/test/{boost:1|2}", ws.apiVentBoostTest)
 			r.Get("/diagnostics/values", ws.apiVentValues)
 			r.Get("/vent/status", ws.apiVentStatus)
 			r.Route("/vent", func(r chi.Router) {
