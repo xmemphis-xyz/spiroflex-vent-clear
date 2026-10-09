@@ -5,4 +5,4 @@ DEFAULT_SCAN_INTERVAL = 30
 CONF_HOST = "host"
 CONF_PORT = "port"
 
-PLATFORMS = ["switch", "select", "sensor", "binary_sensor"]
+PLATFORMS = ["switch", "select", "sensor", "binary_sensor", "button"]
