@@ -42,6 +42,7 @@ func (ws *WebServer) Handler() http.Handler {
 			r.Route("/vent", func(r chi.Router) {
 				r.Post("/level/{level:[1-3]?}", ws.apiVentLevel)
 				r.Post("/pause", ws.apiVentPause)
+				r.Post("/boost/{boost:1|2}", ws.apiVentBoost)
 				r.Post("/mode/{mode:schedule|manual}", ws.apiVentMode)
 				r.Post("/power/{state:on|off}", ws.apiVentPower)
 			})
