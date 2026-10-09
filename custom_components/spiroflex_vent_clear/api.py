@@ -25,6 +25,11 @@ class SpiroflexApi:
     async def async_set_level(self, level: int) -> None:
         await self._request("POST", f"/api/vent/level/{level}")
 
+    async def async_start_boost(self, boost: int) -> None:
+        if boost not in (1, 2):
+            raise ValueError("BOOST must be 1 or 2")
+        await self._request("POST", f"/api/vent/boost/{boost}")
+
     async def async_pause(self) -> None:
         await self._request("POST", "/api/vent/pause")
 
