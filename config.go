@@ -3,6 +3,8 @@ package spiroflex
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -55,9 +57,15 @@ type Alexa struct {
 }
 
 func LoadConfig() (*Config, error) {
-	viper.SetConfigName("config")
-	viper.SetConfigType("yaml")
-	viper.AddConfigPath(".")
+	viper.Reset()
+	if path := os.Getenv("SPIROFLEX_CONFIG_FILE"); path != "" {
+		viper.SetConfigFile(path)
+	} else {
+		viper.SetConfigName("config")
+		viper.SetConfigType("yaml")
+		viper.AddConfigPath(".")
+		viper.AddConfigPath(filepath.Dir(os.Args[0]))
+	}
 
 	if err := viper.ReadInConfig(); err != nil {
 		return nil, fmt.Errorf("viper.ReadInConfig failed: %w", err)
