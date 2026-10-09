@@ -18,7 +18,7 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up Spiroflex binary sensors."""
-    async_add_entities([SpiroflexAlarmSensor(entry.runtime_data)])
+    async_add_entities([SpiroflexAlarmSensor(entry.runtime_data), SpiroflexBoostSensor(entry.runtime_data, 1), SpiroflexBoostSensor(entry.runtime_data, 2)])
 
 
 class SpiroflexAlarmSensor(SpiroflexEntity, BinarySensorEntity):
@@ -32,3 +32,18 @@ class SpiroflexAlarmSensor(SpiroflexEntity, BinarySensorEntity):
     @property
     def is_on(self) -> bool:
         return bool(self.coordinator.data.get("alarm", False))
+
+
+class SpiroflexBoostSensor(SpiroflexEntity, BinarySensorEntity):
+    """Whether a timed BOOST mode is running."""
+
+    def __init__(self, coordinator: SpiroflexCoordinator, boost: int) -> None:
+        super().__init__(coordinator)
+        self._boost = boost
+        self._attr_name = f"BOOST {boost} aktywny"
+        self._attr_icon = "mdi:fan"
+        self._attr_unique_id = f"{DOMAIN}_boost_{boost}_active"
+
+    @property
+    def is_on(self) -> bool:
+        return bool(self.coordinator.data.get(f"boost_{self._boost}_active", False))
