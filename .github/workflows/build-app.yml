@@ -1,71 +1,32 @@
-name: Build and publish Home Assistant app
+# The app moved to its own repository. Do not publish container images here:
+# this repository's release tags version the HACS integration, not the app.
+# Keep this manual-only notice so existing workflow bookmarks explain the move.
+name: Legacy app build - moved to add-on repository
 
 on:
-  release:
-    types: [published]
   workflow_dispatch:
 
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ghcr.io/xmemphis-xyz/spiroflex-vent-clear
+permissions: {}
 
 jobs:
-  build:
+  moved:
+    name: App publishing is managed in the add-on repository
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-      attestations: write
-      id-token: write
-
+    timeout-minutes: 2
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v6
-
-      - name: Determine version
-        id: version
+      - name: Explain repository split
         shell: bash
         run: |
-          if [ "${GITHUB_EVENT_NAME}" = "release" ]; then
-            VERSION="${{ github.event.release.tag_name }}"
-          else
-            VERSION="${GITHUB_REF_NAME}"
-          fi
-          VERSION="${VERSION#v}"
-          echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
+          cat <<'NOTICE' | tee -a "$GITHUB_STEP_SUMMARY"
+          # App build moved
 
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          This repository contains the Go source and the HACS integration.
+          Publishing a HACS release must not rebuild or overwrite app images.
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v4
+          App builds and GHCR publishing are managed exclusively here:
+          https://github.com/xmemphis-xyz/homeassistant-addon-spiroflex-vent-clear/actions
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
-
-      - name: Build and publish
-        id: push
-        uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
-        with:
-          context: .
-          file: ./app/spiroflex_vent_clear/Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: |
-            ${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
-            ${{ env.IMAGE_NAME }}:latest
-          build-args: |
-            BUILD_VERSION=${{ steps.version.outputs.version }}
-          provenance: true
-          sbom: true
-
-      - name: Generate image attestation
-        uses: actions/attest@v4
-        with:
-          subject-name: ${{ env.IMAGE_NAME }}
-          subject-digest: ${{ steps.push.outputs.digest }}
-          push-to-registry: true
+          Use the existing "Test backend and BOOST controls" workflow in this
+          repository for Go and Python checks. Do not rerun historical app builds
+          from old release tags: they still contain the retired Dockerfile.
+          NOTICE
