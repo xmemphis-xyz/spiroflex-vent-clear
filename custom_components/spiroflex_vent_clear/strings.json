@@ -4,21 +4,31 @@
       "user": {
         "title": "Connect Spiroflex ecoVENT Simple",
         "description": "Enter the address of the local ventclear API.",
-        "data": {
-          "host": "Host",
-          "port": "Port"
-        },
+        "data": {"host": "Host", "port": "Port"},
         "data_description": {
           "host": "IP address or hostname of the server running ventclear.",
           "port": "HTTP port exposed by ventclear. The default is 8088."
         }
+      },
+      "reconfigure": {
+        "title": "Change Spiroflex connection",
+        "description": "Enter the new address for the same ventilation unit (for example, the Home Assistant app). Existing devices, entities and automations are preserved. The connection is tested before saving.",
+        "data": {"host": "Host", "port": "Port"},
+        "data_description": {
+          "host": "New IP address or hostname, without http:// or a port.",
+          "port": "REST API port. The default is 8088."
+        }
       }
     },
     "error": {
-      "cannot_connect": "Unable to connect to the Spiroflex API."
+      "cannot_connect": "Unable to connect to the Spiroflex API.",
+      "already_configured": "This Spiroflex API is already used by another entry.",
+      "invalid_host": "Enter only the IP address or hostname.",
+      "invalid_port": "Enter a port from 1 to 65535."
     },
     "abort": {
-      "already_configured": "This Spiroflex API is already configured."
+      "already_configured": "This Spiroflex API is already configured.",
+      "reconfigure_successful": "Spiroflex connection updated. Existing device and entities preserved."
     }
   }
 }

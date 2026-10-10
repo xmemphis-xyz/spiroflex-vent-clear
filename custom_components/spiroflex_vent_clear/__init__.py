@@ -16,7 +16,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         entry.data[CONF_HOST],
         entry.data[CONF_PORT],
     )
-    coordinator = SpiroflexCoordinator(hass, api)
+    coordinator = SpiroflexCoordinator(
+        hass, api, device_identifier=entry.data.get("device_identifier")
+    )
     await coordinator.async_config_entry_first_refresh()
 
     entry.runtime_data = coordinator

@@ -15,7 +15,7 @@ class SpiroflexEntity(CoordinatorEntity[SpiroflexCoordinator]):
     def __init__(self, coordinator: SpiroflexCoordinator) -> None:
         super().__init__(coordinator)
         self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, coordinator.api.base_url)},
+            identifiers={(DOMAIN, coordinator.device_identifier)},
             name="Spiroflex ecoVENT Simple",
             manufacturer="Spiroflex",
             model="Vent Clear / ecoVENT Simple",

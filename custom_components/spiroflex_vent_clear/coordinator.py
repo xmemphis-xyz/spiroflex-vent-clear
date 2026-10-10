@@ -16,8 +16,15 @@ _LOGGER = logging.getLogger(__name__)
 class SpiroflexCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     """Coordinate polling of the Spiroflex API."""
 
-    def __init__(self, hass: HomeAssistant, api: SpiroflexApi) -> None:
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        api: SpiroflexApi,
+        *,
+        device_identifier: str | None = None,
+    ) -> None:
         self.api = api
+        self.device_identifier = device_identifier or api.base_url
         super().__init__(
             hass,
             _LOGGER,
