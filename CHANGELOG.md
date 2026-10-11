@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.1.7
+
+- Added **Kominek** as the third timed mode, after BOOST 1/2, with a native HA ON/OFF switch, active binary sensor, and remaining-time sensor.
+- Mapped on the real device: `u6639` 0 → 256, `u7429` -1 → 10, supply fan 40% → 100%, extract fan 40% → 10%.
+- Added `POST /api/vent/fireplace/on` and `/off`, preserving unrelated u6639 bits.
+- Reads all three mode timers and blocks starting a mode if another is running.
+- Requires confirmed flag and timer readback, sends a single write, and supports cancellation without turning off ventilation.
+- Retains existing BOOST switch IDs when reconfiguring the backend host.
+- Added Go control tests and Python HA client/entity contract tests.
+
+**Hardware note:** Kominek activation via the official app was confirmed, but ON/OFF via the new REST endpoints still require live testing. Upgrade the backend app to 0.1.7 before HACS 0.1.7.
+
+## 0.1.6
+
+- Added Reconfigure for moving the integration to another REST API host without losing the existing device and entity identifiers.
+- Moved app publishing into its own repository; HACS releases do not build GHCR images.
+
+
 ## 0.1.5
 
 - Added native BOOST 1/2 switches with ON and OFF. An active switch stays available for cancellation.

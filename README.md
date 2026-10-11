@@ -8,7 +8,7 @@ The project consists of:
 - a local REST API for controlling and reading the ventilation unit;
 - a custom Home Assistant integration that communicates only with that local REST API.
 
-> **Status:** early release. The integration is being developed against a real ecoVENT Simple installation. Some device functions, including BOOST 1/2 configuration, are still being mapped and are not yet exposed.
+> **Status:** early release. BOOST 1/2 ON/OFF has been verified on a real unit. The Kominek mode was mapped from real before/after readings on 2026-10-11; REST ON/OFF still requires live verification.
 
 ## Features
 
@@ -24,9 +24,12 @@ The current Home Assistant integration provides:
 - supply and extract fan percentages;
 - filter replacement countdown;
 - supply and extract filter usage;
-- alarm state.
+- alarm state;
+- timed BOOST 1, BOOST 2 and **Kominek** ON/OFF switches;
+- active-state binary sensors and remaining-time sensors for all three timed modes;
+- Reconfigure to move an existing device from a standalone bridge to the Home Assistant app while preserving entities.
 
-Unsupported or unverified parameters are intentionally not exposed.
+On the user's installation Kominek changed fan percentages from 40/40% to 100/10%. This is not a validated cooker-hood safety mechanism.
 
 ## Architecture
 
@@ -42,23 +45,21 @@ ventclear REST API
 Spiroflex ecoNET
 ```
 
-AWS Cognito and IoT credentials stay in the Go service configuration. They are not stored in Home Assistant.
+AWS Cognito and IoT credentials remain in the standalone Go service configuration or, when running as an app, in Home Assistant-managed app options. They are not stored in the HACS integration.
 
 ## Home Assistant app (Docker)
 
 The Go REST bridge can also run as a Home Assistant app (formerly add-on) on Home Assistant OS.
 
-The app is located under:
+The maintained app is in a separate repository:
 
-```
-app/spiroflex_vent_clear/
-```
+https://github.com/xmemphis-xyz/homeassistant-addon-spiroflex-vent-clear
 
 It runs the same Go service in a dedicated container and exposes the REST API on port **8088**. Configuration is entered through the Home Assistant app UI; credentials are stored in the app's `options.json` and are not committed to Git.
 
 The container image is published to GitHub Container Registry by GitHub Actions for **aarch64** and **amd64**.
 
-See the app documentation in `app/spiroflex_vent_clear/README.md`.
+See the README and build workflow in the separate app repository. The legacy `app/` directory here is not used for publishing images.
 
 ## Home Assistant installation with HACS
 
@@ -146,9 +147,16 @@ POST /api/vent/pause
 
 POST /api/vent/mode/schedule
 POST /api/vent/mode/manual
+
+POST /api/vent/boost/1/on
+POST /api/vent/boost/1/off
+POST /api/vent/boost/2/on
+POST /api/vent/boost/2/off
+POST /api/vent/fireplace/on
+POST /api/vent/fireplace/off
 ```
 
-Diagnostic endpoints are also available for protocol development.
+**Update the Home Assistant app to 0.1.7 before upgrading HACS to 0.1.7.** The backend requires live testing of the new Kominek write commands. Diagnostic endpoints are also available for protocol development.
 
 ## Development
 
