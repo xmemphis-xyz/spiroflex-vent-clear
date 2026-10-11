@@ -26,7 +26,7 @@ func (f *fakeBoostDevice) WriteBoostMask(_ context.Context, mask uint32) error {
 	return f.writeErr
 }
 func boostState(power bool, mask uint32, first, second int64) boostSnapshot {
-	return boostSnapshot{Power: power, Mask: mask, Remaining: [2]int64{first, second}}
+	return boostSnapshot{Power: power, Mask: mask, Remaining: [3]int64{first, second, -1}}
 }
 
 func TestPlanBoostChange(t *testing.T) {
@@ -57,11 +57,11 @@ func TestPlanBoostChange(t *testing.T) {
 }
 
 func TestDecodeBoostSnapshot(t *testing.T) {
-	good := []byte(`{"u7074":[1,0,1],"u6639":[64,0,4294967296],"u7427":[13,0,0],"u7428":[-1,0,0]}`)
+	good := []byte(`{"u7074":[1,0,1],"u6639":[64,0,4294967296],"u7427":[13,0,0],"u7428":[-1,0,0],"u7429":[-1,0,0]}`)
 	state, err := decodeBoostSnapshot(good)
 	if err != nil || state != boostState(true,64,13,-1) { t.Fatalf("%+v %v",state,err) }
 	for _, value := range []string{"null", "64.5", "-1", "4294967296", `"64"`, "true", "{}"} {
-		raw := []byte(fmt.Sprintf(`{"u7074":[1],"u6639":[%s],"u7427":[13],"u7428":[-1]}`,value))
+		raw := []byte(fmt.Sprintf(`{"u7074":[1],"u6639":[%s],"u7427":[13],"u7428":[-1],"u7429":[-1]}`,value))
 		if _,err := decodeBoostSnapshot(raw); err == nil { t.Fatalf("accepted mask %s",value) }
 	}
 	for _, raw := range []string{`null`,`{}`,`[]`,`{"u7074":[]}`,`{"u7074":[null]}`} {

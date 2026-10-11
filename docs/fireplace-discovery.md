@@ -32,8 +32,29 @@ Focus on `u6639` (mask), `u7429` (candidate countdown), `u7158`
 A screenshot or reading of the actual "Kominek" settings should also
 be collected to confirm what the countdown represents.
 
-Only when activation state, duration and cancel write have been verified
-on this controller should a writable Home Assistant switch be enabled.
-The switch will belong after the two BOOST switches. If the fireplace
-mode is to compensate a cooker hood, ensure sufficient combustion air
-independently; software control is not a safety interlock.
+Observed on 2026-10-11 from the user's before/after parameter-table diff:
+- `u6639`: 0 -> **256** (Kominek mask bit confirmed on activation)
+- `u7429`: -1 -> **10** (third timed-mode countdown confirmed)
+- `u6202`: 40% -> **100%** (supply fan)
+- `u6203`: 40% -> **10%** (extract fan)
+
+Backend v0.1.7 adds POST /api/vent/fireplace/on and /off. It uses one
+u6639 mask write (256 to start, &^256 to stop), preserving all other
+bits, and waits for controller readback of both the state flag and timer.
+START is blocked when BOOST 1/2 or any unknown timed mode is active.
+Repeated ON must not reset the active timer; inactive OFF is a no-op.
+The Go code tests these invariants.
+
+HA v0.1.7 adds a native ON/OFF Kominek switch after BOOST 1 and BOOST 2,
+binary sensor "Kominek aktywny", and remaining-time sensor. The addon
+must be upgraded to v0.1.7 before upgrading HACS, because the previous
+backend does not expose this command or third-mode status fields.
+
+**Live ON/OFF from the new REST endpoint still requires device testing.**
+The recorded diff proves manual activation from the official app, not
+that REST writes are accepted. Do not blindly retry a timed-out POST:
+read the current state first. Keep the hood automation disabled until
+manual ON and OFF are verified in Home Assistant.
+
+If the fireplace mode is used to assist a cooker hood, ensure adequate
+combustion air independently; software control is not a safety interlock.

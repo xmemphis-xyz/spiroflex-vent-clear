@@ -42,6 +42,18 @@ class SpiroflexApi:
     async def async_stop_boost(self, boost: int) -> None:
         await self.async_set_boost(boost, False)
 
+    async def async_set_fireplace(self, on: bool) -> None:
+        if not isinstance(on, bool):
+            raise ValueError("Fireplace state must be a boolean")
+        path = "/api/vent/fireplace/on" if on else "/api/vent/fireplace/off"
+        data = await self._request("POST", path, timeout=45)
+        if (
+            data.get("ok") is not True
+            or data.get("verified") is not True
+            or data.get("active") is not on
+        ):
+            raise SpiroflexApiError("Fireplace command was not verified by the backend")
+
     async def async_pause(self) -> None:
         await self._request("POST", "/api/vent/pause")
 

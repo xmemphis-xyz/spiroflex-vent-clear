@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-
 )
 
 type boostParameter struct {
@@ -38,6 +37,7 @@ func (ws *WebServer) apiVentBoostDiagnostics(w http.ResponseWriter, r *http.Requ
 		"u6639": true, "u6635": true, "u6636": true,
 		"u6637": true, "u6638": true, "u7099": true,
 		"u7100": true, "u7427": true, "u7428": true,
+		"u7429": true, "u7158": true,
 	}
 	parameters := make(map[string]boostParameter)
 	for _, row := range rows {
@@ -77,6 +77,7 @@ func (ws *WebServer) apiVentBoostDiagnostics(w http.ResponseWriter, r *http.Requ
 	_ = json.NewEncoder(w).Encode(map[string]any{
 		"boost_1_active": mask&64 != 0,
 		"boost_2_active": mask&128 != 0,
+		"fireplace_active": mask&256 != 0,
 		"state_mask": mask,
 		"parameters": parameters,
 		"read_only": true,

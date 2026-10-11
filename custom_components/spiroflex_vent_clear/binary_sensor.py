@@ -18,7 +18,7 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up Spiroflex binary sensors."""
-    async_add_entities([SpiroflexAlarmSensor(entry.runtime_data), SpiroflexBoostSensor(entry.runtime_data, 1), SpiroflexBoostSensor(entry.runtime_data, 2)])
+    async_add_entities([SpiroflexAlarmSensor(entry.runtime_data), SpiroflexBoostSensor(entry.runtime_data, 1), SpiroflexBoostSensor(entry.runtime_data, 2), SpiroflexFireplaceSensor(entry.runtime_data)])
 
 
 class SpiroflexAlarmSensor(SpiroflexEntity, BinarySensorEntity):
@@ -47,3 +47,16 @@ class SpiroflexBoostSensor(SpiroflexEntity, BinarySensorEntity):
     @property
     def is_on(self) -> bool:
         return bool(self.coordinator.data.get(f"boost_{self._boost}_active", False))
+
+
+class SpiroflexFireplaceSensor(SpiroflexEntity, BinarySensorEntity):
+    """Whether the fireplace timed mode is active."""
+
+    _attr_name = "Kominek aktywny"
+    _attr_icon = "mdi:fireplace"
+    _attr_unique_id = f"{DOMAIN}_fireplace_active"
+
+    @property
+    def is_on(self) -> bool | None:
+        value = self.coordinator.data.get("fireplace_active")
+        return value if isinstance(value, bool) else None

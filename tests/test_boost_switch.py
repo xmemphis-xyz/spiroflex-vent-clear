@@ -61,14 +61,15 @@ api_module, switch_module, HAError = load_modules()
 
 class BoostSwitchTests(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
-        self.api = types.SimpleNamespace(base_url="http://test:8088", async_set_boost=AsyncMock())
+        self.api = types.SimpleNamespace(base_url="http://test:8088", async_set_boost=AsyncMock(), async_set_fireplace=AsyncMock())
         self.coordinator = types.SimpleNamespace(
-            api=self.api, last_update_success=True,
-            data={"power": True, "boost_1_active": True, "boost_2_active": False},
+            device_identifier="http://oldhost:8088", api=self.api, last_update_success=True,
+            data={"power": True, "boost_1_active": True, "boost_2_active": False, "fireplace_active": False},
             async_request_refresh=AsyncMock(),
         )
         self.first = switch_module.SpiroflexBoostSwitch(self.coordinator, 1)
         self.second = switch_module.SpiroflexBoostSwitch(self.coordinator, 2)
+        self.fireplace = switch_module.SpiroflexFireplaceSwitch(self.coordinator)
 
     def test_active_switch_available_for_stop(self):
         self.assertTrue(self.first.available)
@@ -129,6 +130,86 @@ class BoostSwitchTests(unittest.IsolatedAsyncioTestCase):
         for boost in (0, 3, True, "1"):
             with self.assertRaises(ValueError):
                 await api.async_set_boost(boost, False)
+        api._request.assert_not_awaited()
+
+    def test_fireplace_order_and_device_identity(self):
+        self.assertTrue(hasattr(switch_module, "SpiroflexFireplaceSwitch"))
+        self.assertEqual(self.fireplace._attr_name, "Kominek")
+        self.assertIn("oldhost:8088", self.first._attr_unique_id)
+        self.assertIn("oldhost:8088", self.second._attr_unique_id)
+        self.assertIn("oldhost:8088", self.fireplace._attr_unique_id)
+        self.api.base_url = "http://newhost:8088"
+        moved = switch_module.SpiroflexBoostSwitch(self.coordinator, 1)
+        self.assertEqual(self.first._attr_unique_id, moved._attr_unique_id)
+        self.assertNotIn("newhost", moved._attr_unique_id)
+
+    def test_fireplace_blocks_boost_when_active(self):
+        self.coordinator.data.update(
+            boost_1_active=False, boost_2_active=False, fireplace_active=True
+        )
+        self.assertTrue(self.fireplace.available)
+        self.assertTrue(self.fireplace.is_on)
+        self.assertFalse(self.first.available)
+        self.assertFalse(self.second.available)
+
+    def test_fireplace_active_stays_available_for_stop_with_power_off(self):
+        self.coordinator.data.update(
+            power=False, boost_1_active=False,
+            boost_2_active=False, fireplace_active=True
+        )
+        self.assertTrue(self.fireplace.available)
+
+    def test_fireplace_not_available_during_boost(self):
+        self.assertFalse(self.fireplace.available)
+        self.coordinator.data.update(boost_1_active=False, boost_2_active=False)
+        self.assertTrue(self.fireplace.available)
+        self.assertFalse(self.fireplace.is_on)
+
+    def test_unknown_fireplace_state_cannot_be_operated(self):
+        del self.coordinator.data["fireplace_active"]
+        self.assertIsNone(self.fireplace.is_on)
+        self.assertFalse(self.fireplace.available)
+        self.assertFalse(self.first.available)
+
+    async def test_fireplace_off_calls_api_and_refreshes_without_optimistic_state(self):
+        self.coordinator.data.update(
+            boost_1_active=False, fireplace_active=True
+        )
+        await self.fireplace.async_turn_off()
+        self.api.async_set_fireplace.assert_awaited_once_with(False)
+        self.coordinator.async_request_refresh.assert_awaited_once()
+        self.assertTrue(self.fireplace.is_on)
+
+    async def test_fireplace_on_calls_api(self):
+        self.coordinator.data["boost_1_active"] = False
+        await self.fireplace.async_turn_on()
+        self.api.async_set_fireplace.assert_awaited_once_with(True)
+
+    async def test_fireplace_api_validates_verified_readback(self):
+        api = api_module.SpiroflexApi(None, "test", 8088)
+        api._request = AsyncMock(return_value={"ok": True, "verified": True, "active": True})
+        await api.async_set_fireplace(True)
+        api._request.assert_awaited_with("POST", "/api/vent/fireplace/on", timeout=45)
+        api._request.return_value = {"ok": True, "verified": True, "active": False}
+        await api.async_set_fireplace(False)
+        api._request.assert_awaited_with("POST", "/api/vent/fireplace/off", timeout=45)
+        for invalid in ({}, {"ok":True}, {"ok":True,"verified":True,"active":False}):
+            api._request.return_value = invalid
+            with self.assertRaises(api_module.SpiroflexApiError):
+                await api.async_set_fireplace(True)
+
+    async def test_fireplace_command_failure_refreshes_and_reports_error(self):
+        self.api.async_set_fireplace.side_effect = api_module.SpiroflexApiError("unknown")
+        with self.assertRaises(HAError):
+            await self.fireplace.async_turn_off()
+        self.coordinator.async_request_refresh.assert_awaited_once()
+
+    async def test_fireplace_invalid_argument_rejected_without_request(self):
+        api = api_module.SpiroflexApi(None, "test", 8088)
+        api._request = AsyncMock()
+        for invalid in ("on", 1, 0, None):
+            with self.assertRaises(ValueError):
+                await api.async_set_fireplace(invalid)
         api._request.assert_not_awaited()
 
 

@@ -20,7 +20,7 @@ type mqttBoostDevice struct {
 }
 
 func (d mqttBoostDevice) ReadBoost(ctx context.Context) (boostSnapshot, error) {
-	values, err := d.session.GetValues(ctx, d.componentID, []string{"u7074", "u6639", "u7427", "u7428"})
+	values, err := d.session.GetValues(ctx, d.componentID, []string{"u7074", "u6639", "u7427", "u7428", "u7429"})
 	if err != nil { return boostSnapshot{}, err }
 	for _, target := range values {
 		if target.Component != d.componentID { continue }
@@ -31,7 +31,7 @@ func (d mqttBoostDevice) ReadBoost(ctx context.Context) (boostSnapshot, error) {
 }
 
 func (d mqttBoostDevice) WriteBoostMask(ctx context.Context, mask uint32) error {
-	log.Printf("BOOST command: u6639=%d", mask)
+	log.Printf("Timed mode command: u6639=%d", mask)
 	resp, err := d.session.SendInstallationRequest(ctx, []econet.OperationRequest{{
 		Name: econet.PARAMS_MODIFICATION,
 		Targets: []econet.TargetRequest{{Component: d.componentID, Parameters: map[string]string{"u6639": strconv.FormatUint(uint64(mask), 10)}}},

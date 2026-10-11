@@ -4,12 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-
 )
 
 // apiVentFireplaceDiagnostics collects read-only observations for mapping
-// the third timed mode (Kominek). Do not infer a writable bit from the
-// BOOST bits without comparing OFF and ON readings on the actual controller.
+// the third timed mode (Kominek); u6639=256 and u7429 are mapped from
+// OFF/ON readings on the actual Spiroflex ecoVENT Simple controller.
 func (ws *WebServer) apiVentFireplaceDiagnostics(w http.ResponseWriter, r *http.Request) {
 	session, componentID, err := ws.prepareEconet(r.Context())
 	if err != nil {
@@ -52,7 +51,7 @@ func (ws *WebServer) apiVentFireplaceDiagnostics(w http.ResponseWriter, r *http.
 	w.Header().Set("Cache-Control", "no-store")
 	_ = json.NewEncoder(w).Encode(map[string]any{
 		"read_only":              true,
-		"fireplace_command_mapped": false,
+		"fireplace_command_mapped": true,
 		"parameters":             observations,
 	})
 }

@@ -28,8 +28,10 @@ type VentStatus struct {
 	Alarm               bool    `json:"alarm"`
 	Boost1Active        bool    `json:"boost_1_active"`
 	Boost2Active        bool    `json:"boost_2_active"`
+	FireplaceActive     bool    `json:"fireplace_active"`
 	Boost1Remaining     *int    `json:"boost_1_remaining"`
 	Boost2Remaining     *int    `json:"boost_2_remaining"`
+	FireplaceRemaining  *int    `json:"fireplace_remaining"`
 }
 
 func (ws *WebServer) apiVentStatus(w http.ResponseWriter, r *http.Request) {
@@ -62,6 +64,7 @@ func (ws *WebServer) apiVentStatus(w http.ResponseWriter, r *http.Request) {
 		"u6639",
 		"u7427",
 		"u7428",
+		"u7429",
 	})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadGateway)
@@ -212,6 +215,7 @@ func buildVentStatus(parameters map[string][]float64) (VentStatus, error) {
 	if err != nil { return VentStatus{}, err }
 	status.Boost1Active = int(mask)&64 != 0
 	status.Boost2Active = int(mask)&128 != 0
+	status.FireplaceActive = int(mask)&256 != 0
 	remaining1, err := requiredParameter(parameters, "u7427")
 	if err != nil { return VentStatus{}, err }
 	remaining2, err := requiredParameter(parameters, "u7428")
@@ -223,6 +227,12 @@ func buildVentStatus(parameters map[string][]float64) (VentStatus, error) {
 	if status.Boost2Active && remaining2 >= 0 {
 		minutes := int(remaining2)
 		status.Boost2Remaining = &minutes
+	}
+	remaining3, err := requiredParameter(parameters, "u7429")
+	if err != nil { return VentStatus{}, err }
+	if status.FireplaceActive && remaining3 >= 0 {
+		minutes := int(remaining3)
+		status.FireplaceRemaining = &minutes
 	}
 	return status, nil
 }
