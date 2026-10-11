@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/mtojek/spiroflex-vent-clear/econet"
 )
 
 // apiVentFireplaceDiagnostics collects read-only observations for mapping
