@@ -7,12 +7,16 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/mtojek/spiroflex-vent-clear"
+	"github.com/mtojek/spiroflex-vent-clear/econet"
 	"github.com/tbuckley/go-alexa"
 )
 
 type WebServer struct {
 	c *spiroflex.Config
 	boostMu sync.Mutex
+
+	instMu sync.Mutex
+	inst   *econet.Installation
 }
 
 type response struct {

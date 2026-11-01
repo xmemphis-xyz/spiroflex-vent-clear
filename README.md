@@ -45,7 +45,7 @@ ventclear REST API
 Spiroflex ecoNET
 ```
 
-AWS Cognito and IoT credentials remain in the standalone Go service configuration or, when running as an app, in Home Assistant-managed app options. They are not stored in the HACS integration.
+Your ecoNET account login and password remain in the standalone Go service configuration or, when running as an app, in Home Assistant-managed app options. They are not stored in the HACS integration.
 
 ## Home Assistant app (Docker)
 
@@ -87,29 +87,41 @@ Select **Integration** as the category.
 
 ## Running the Go service
 
-Create a local `config.yaml` containing the required ecoNET credentials and installation information.
-
-Example structure:
+Create a local `config.yaml` with the login and password you use in the Spiroflex / ecoNET mobile app. That is all that is required:
 
 ```yaml
-region: eu-west-3
+cognito:
+  username: "user@example.com"
+  password: "your-password"
+```
+
+Everything else is optional:
+
+- **Backend identifiers** (`region`, `cognito.user_pool_id`, `cognito.client_id`, `cognito.identity_pool_id`, `gateway.name`, `iot.name`) are built in. They are the same for every Spiroflex account. Set them only to override the defaults if the vendor changes its backend.
+- **Installation** is discovered automatically after login. If the account has exactly one installation, it is used. If there are several, set `installation.name` (case-insensitive) or `installation.id`. Otherwise the log lists the available installations. Setting `installation.id` skips discovery.
+- **API** defaults to `endpoint: "0.0.0.0:8088"` with `rest: true`.
+
+Full example with all optional settings:
+
+```yaml
+region: eu-central-1
 
 cognito:
   username: "user@example.com"
   password: "your-password"
-  user_pool_id: "eu-west-3_example"
-  client_id: "your-client-id"
-  identity_pool_id: "eu-west-3:xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+  user_pool_id: "eu-central-1_que8JCEVH"
+  client_id: "3qga0ntgrj7fblcgau24plp2h4"
+  identity_pool_id: "eu-central-1:d1f8d4ae-7401-4d69-b603-1e992f635253"
 
 gateway:
-  name: your-api-gateway
+  name: 6tx17a8ijh
 
 iot:
-  name: your-iot-endpoint
+  name: a24t7r3f2r1nrr-ats
 
 installation:
-  name: "ecoVENT Simple"
-  id: "your-installation-id"
+  name: "My home"
+  id: ""
 
 api:
   endpoint: "0.0.0.0:8088"
