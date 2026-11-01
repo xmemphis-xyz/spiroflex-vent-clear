@@ -192,6 +192,14 @@ econet/
 
 Pull requests and issue reports are welcome.
 
+## Releasing
+
+1. Bump `version` in `custom_components/spiroflex_vent_clear/manifest.json`.
+2. Add a `## <version>` section to `CHANGELOG.md`.
+3. Merge to `main`.
+
+The **Release** workflow runs the tests and creates the `v<version>` tag and GitHub release with notes from the changelog. If the release already exists, the workflow does nothing. Home Assistant app images are released separately from the add-on repository.
+
 ## Disclaimer
 
 This project is an independent community project and is not affiliated with or endorsed by Spiroflex. Use it at your own risk. Test changes carefully before using them to control a ventilation system.
