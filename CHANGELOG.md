@@ -8,7 +8,7 @@
 - `api.endpoint` defaults to `0.0.0.0:8088` and `api.rest` defaults to `true`.
 - Configurations with an old placeholder region and no backend identifiers are migrated to the built-in values.
 - Existing configurations with all values filled in work unchanged.
-- No changes to the HACS integration.
+- HACS integration code is unchanged; its version is bumped to 0.1.8 to match the release.
 
 ## 0.1.7
 
