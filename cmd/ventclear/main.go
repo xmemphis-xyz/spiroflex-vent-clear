@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"io"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/mtojek/spiroflex-vent-clear"
 	"github.com/mtojek/spiroflex-vent-clear/api"
@@ -41,6 +43,17 @@ func main() {
 	}
 
 	webServer := api.NewWebServer(c)
+
+	if c.Installation.ID == "" {
+		go func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+			defer cancel()
+			if err := webServer.DiscoverInstallation(ctx); err != nil {
+				log.Printf("Installation discovery failed (will retry on the next request): %v", err)
+			}
+		}()
+	}
+
 	srv := &http.Server{
 		Addr:    c.API.Endpoint,
 		Handler: webServer.Handler(),

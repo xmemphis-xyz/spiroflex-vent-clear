@@ -67,6 +67,8 @@ func LoadConfig() (*Config, error) {
 		viper.AddConfigPath(filepath.Dir(os.Args[0]))
 	}
 
+	viper.SetDefault("api.rest", true)
+
 	if err := viper.ReadInConfig(); err != nil {
 		return nil, fmt.Errorf("viper.ReadInConfig failed: %w", err)
 	}
@@ -74,6 +76,10 @@ func LoadConfig() (*Config, error) {
 	var c Config
 	if err := viper.Unmarshal(&c); err != nil {
 		return nil, fmt.Errorf("viper.Unmarshal failed: %w", err)
+	}
+	c.ApplyDefaults()
+	if err := c.Validate(); err != nil {
+		return nil, err
 	}
 	return &c, nil
 }

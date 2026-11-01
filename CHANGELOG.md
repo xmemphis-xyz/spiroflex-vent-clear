@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.8
+
+- The REST bridge now needs only the ecoNET account **username and password**.
+- Built-in defaults for the Spiroflex backend identifiers: Cognito user pool, app client, identity pool, API Gateway, IoT endpoint and region (`eu-central-1`). Configured values still override them.
+- The installation is discovered automatically after login. With several installations, it is chosen by `installation.name` (or set `installation.id`). An ambiguous account logs the available installations.
+- `api.endpoint` defaults to `0.0.0.0:8088` and `api.rest` defaults to `true`.
+- Configurations with an old placeholder region and no backend identifiers are migrated to the built-in values.
+- Existing configurations with all values filled in work unchanged.
+- No changes to the HACS integration.
+
 ## 0.1.7
 
 - Added **Kominek** as the third timed mode, after BOOST 1/2, with a native HA ON/OFF switch, active binary sensor, and remaining-time sensor.

@@ -91,11 +91,12 @@ func (ws *WebServer) prepareEconet(ctx context.Context) (*econet.MQTTSession, st
 		return nil, "", fmt.Errorf("unable to create client: %w", err)
 	}
 
-	if ws.c.Installation.ID == "" {
-		return nil, "", fmt.Errorf("installation ID is not configured")
+	inst, err := ws.installation(ctx, client)
+	if err != nil {
+		return nil, "", err
 	}
 
-	session, err := client.MQTT(ctx, ws.c.Installation.ID)
+	session, err := client.MQTT(ctx, inst.ID)
 	if err != nil {
 		return nil, "", fmt.Errorf("MQTT error: %w", err)
 	}
@@ -137,15 +138,16 @@ func (ws *WebServer) apiVentDiagnostics(w http.ResponseWriter, r *http.Request) 
 
 	log.Printf("DIAG: Cognito authentication OK")
 
-	if ws.c.Installation.ID == "" {
-		log.Printf("DIAG: installation ID is empty")
-		http.Error(w, "installation ID is not configured", http.StatusInternalServerError)
+	inst, err := ws.installation(ctx, client)
+	if err != nil {
+		log.Printf("DIAG: installation error: %v", err)
+		http.Error(w, err.Error(), http.StatusBadGateway)
 		return
 	}
 
-	log.Printf("DIAG: connecting MQTT to installation %s", ws.c.Installation.ID)
+	log.Printf("DIAG: connecting MQTT to installation %s", inst.ID)
 
-	session, err := client.MQTT(ctx, ws.c.Installation.ID)
+	session, err := client.MQTT(ctx, inst.ID)
 	if err != nil {
 		log.Printf("DIAG: MQTT error: %v", err)
 		http.Error(w, err.Error(), http.StatusBadGateway)
@@ -171,8 +173,8 @@ func (ws *WebServer) apiVentDiagnostics(w http.ResponseWriter, r *http.Request) 
 
 	if err := json.NewEncoder(w).Encode(map[string]interface{}{
 		"installation": map[string]string{
-			"id":   ws.c.Installation.ID,
-			"name": ws.c.Installation.Name,
+			"id":   inst.ID,
+			"name": inst.Name,
 		},
 		"components": components,
 	}); err != nil {
@@ -190,12 +192,13 @@ func (ws *WebServer) apiVentValues(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if ws.c.Installation.ID == "" {
-		http.Error(w, "installation ID is not configured", http.StatusInternalServerError)
+	inst, err := ws.installation(ctx, client)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadGateway)
 		return
 	}
 
-	session, err := client.MQTT(ctx, ws.c.Installation.ID)
+	session, err := client.MQTT(ctx, inst.ID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadGateway)
 		return
@@ -256,12 +259,13 @@ func (ws *WebServer) apiVentSequentialValues(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	if ws.c.Installation.ID == "" {
-		http.Error(w, "installation ID is not configured", http.StatusInternalServerError)
+	inst, err := ws.installation(ctx, client)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadGateway)
 		return
 	}
 
-	session, err := client.MQTT(ctx, ws.c.Installation.ID)
+	session, err := client.MQTT(ctx, inst.ID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadGateway)
 		return
