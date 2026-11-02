@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.9
+
+- Fixed HTTP 502 `GET_VALUES target failed, status code: 1` from `/api/vent/status` on controllers that return `"err"` for `u7151` (operating status).
+- A partial `GET_VALUES` read (status code 1) now keeps all readable parameters. Unreadable ones are written to the log.
+- If `u7151` cannot be read, `status` is reported as `unknown`, so the HA operating status sensor shows *unknown*. All other entities keep working.
+- Other required parameters returning `"err"` still fail the read, with the parameter name in the error.
+- BOOST and Kominek reads and writes keep their strict checks.
+- HACS integration code is unchanged; its version is bumped to 0.1.9 to match the release.
+
 ## 0.1.8
 
 - The REST bridge now needs only the ecoNET account **username and password**.

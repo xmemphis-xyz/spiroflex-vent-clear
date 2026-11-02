@@ -3,7 +3,9 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
+	"sort"
 
 	"github.com/mtojek/spiroflex-vent-clear/econet"
 )
@@ -95,19 +97,57 @@ func findVentParameters(values []econet.TargetResponse, componentID string) (map
 			continue
 		}
 
-		if value.StatusCode != 0 {
-			return nil, fmt.Errorf("GET_VALUES target failed, status code: %d", value.StatusCode)
+		parameters, failed, err := decodeParameterValues(value.Parameters)
+		if err != nil {
+			if value.StatusCode != 0 {
+				return nil, fmt.Errorf("GET_VALUES target failed, status code: %d", value.StatusCode)
+			}
+			return nil, err
 		}
 
-		var parameters map[string][]float64
-		if err := json.Unmarshal(value.Parameters, &parameters); err != nil {
-			return nil, fmt.Errorf("unable to decode GET_VALUES parameters: %w", err)
+		// A non-zero target status with a parameter map means a partial
+		// read: some parameters (e.g. u7151 on some controllers) return
+		// "err" while the rest are valid. Keep the valid ones.
+		if len(failed) > 0 || value.StatusCode != 0 {
+			log.Printf("GET_VALUES partial read (status code %d), unreadable parameters: %v", value.StatusCode, failed)
+		}
+		if len(parameters) == 0 {
+			return nil, fmt.Errorf("GET_VALUES target failed, status code: %d", value.StatusCode)
 		}
 
 		return parameters, nil
 	}
 
 	return nil, fmt.Errorf("component %s not found in GET_VALUES response", componentID)
+}
+
+// decodeParameterValues decodes a GET_VALUES parameter map. Each value is
+// normally a list with one number; a controller may instead return "err" (as a
+// string or inside the list) for a parameter it cannot read. Such parameters
+// are left out of the result and reported in failed.
+func decodeParameterValues(raw json.RawMessage) (map[string][]float64, []string, error) {
+	var rawParameters map[string]json.RawMessage
+	if err := json.Unmarshal(raw, &rawParameters); err != nil {
+		return nil, nil, fmt.Errorf("unable to decode GET_VALUES parameters: %w", err)
+	}
+
+	parameters := make(map[string][]float64, len(rawParameters))
+	var failed []string
+	for name, value := range rawParameters {
+		var list []float64
+		if err := json.Unmarshal(value, &list); err == nil {
+			parameters[name] = list
+			continue
+		}
+		var single float64
+		if err := json.Unmarshal(value, &single); err == nil {
+			parameters[name] = []float64{single}
+			continue
+		}
+		failed = append(failed, name)
+	}
+	sort.Strings(failed)
+	return parameters, failed, nil
 }
 
 func buildVentStatus(parameters map[string][]float64) (VentStatus, error) {
@@ -126,15 +166,16 @@ func buildVentStatus(parameters map[string][]float64) (VentStatus, error) {
 		return VentStatus{}, err
 	}
 
-	statusValue, err := requiredParameter(parameters, "u7151")
-	if err != nil {
-		return VentStatus{}, err
-	}
-
 	status := VentStatus{
 		Power:  power != 0,
 		Mode:   modeName(int(modeValue)),
-		Status: statusName(int(statusValue)),
+		Status: "unknown",
+	}
+
+	// u7151 (operating status) is informational and returns "err" on some
+	// controllers, so it must not fail the whole status read.
+	if statusValue, err := requiredParameter(parameters, "u7151"); err == nil {
+		status.Status = statusName(int(statusValue))
 	}
 
 	switch int(levelValue) {
