@@ -8,7 +8,7 @@ The project consists of:
 - a local REST API for controlling and reading the ventilation unit;
 - a custom Home Assistant integration that communicates only with that local REST API.
 
-> **Status:** early release. BOOST 1/2 ON/OFF has been verified on a real unit. The Kominek mode was mapped from real before/after readings on 2026-10-11; REST ON/OFF still requires live verification.
+> **Status:** stable. BOOST 1/2 and Kominek ON/OFF via the REST API have been verified on a real unit (Kominek on 2026-11-02).
 
 ## Features
 
@@ -168,7 +168,7 @@ POST /api/vent/fireplace/on
 POST /api/vent/fireplace/off
 ```
 
-**Update the Home Assistant app to 0.1.7 before upgrading HACS to 0.1.7.** The backend requires live testing of the new Kominek write commands. Diagnostic endpoints are also available for protocol development.
+Kominek requires Home Assistant app 0.1.7 or newer. Diagnostic endpoints are also available for protocol development.
 
 ## Development
 

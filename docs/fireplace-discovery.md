@@ -50,11 +50,9 @@ binary sensor "Kominek aktywny", and remaining-time sensor. The addon
 must be upgraded to v0.1.7 before upgrading HACS, because the previous
 backend does not expose this command or third-mode status fields.
 
-**Live ON/OFF from the new REST endpoint still requires device testing.**
-The recorded diff proves manual activation from the official app, not
-that REST writes are accepted. Do not blindly retry a timed-out POST:
-read the current state first. Keep the hood automation disabled until
-manual ON and OFF are verified in Home Assistant.
+**Live ON/OFF from the REST endpoint was verified on the device on
+2026-11-02** via the Home Assistant switch. Do not blindly retry a
+timed-out POST: read the current state first.
 
 If the fireplace mode is used to assist a cooker hood, ensure adequate
 combustion air independently; software control is not a safety interlock.
