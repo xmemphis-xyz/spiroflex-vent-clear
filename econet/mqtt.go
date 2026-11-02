@@ -244,7 +244,9 @@ func (s *MQTTSession) GetValues(ctx context.Context, targetComponentID string, p
 	}
 
 	for _, op := range resp {
-		if op.StatusCode != 0 {
+		// A non-zero status with targets is a partial read; callers check
+		// per-target status and parameter values themselves.
+		if op.StatusCode != 0 && len(op.Targets) == 0 {
 			return nil, fmt.Errorf("GET_VALUES failed, status code: %d", op.StatusCode)
 		}
 	}
