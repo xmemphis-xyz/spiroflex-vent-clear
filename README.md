@@ -198,7 +198,9 @@ Pull requests and issue reports are welcome.
 2. Add a `## <version>` section to `CHANGELOG.md`.
 3. Merge to `main`.
 
-The **Release** workflow runs the tests and creates the `v<version>` tag and GitHub release with notes from the changelog. If the release already exists, the workflow does nothing. Home Assistant app images are released separately from the add-on repository.
+The **Release** workflow runs the tests and creates the `v<version>` tag and GitHub release with notes from the changelog. If the release already exists, the workflow does nothing.
+
+Within an hour, the [add-on repository](https://github.com/xmemphis-xyz/homeassistant-addon-spiroflex-vent-clear) opens a PR that pins the new release and bumps the Home Assistant app version. Merging that PR publishes the app image.
 
 ## Disclaimer
 
